@@ -158,6 +158,20 @@ npm --prefix backend run admin:create -- you@example.com "Нэр"   # шинэ �
 cd frontend && node scripts/generate-icons.mjs
 ```
 
+## Deploy (Railway)
+
+`main` салбар руу push хийхэд Railway автоматаар deploy хийнэ. Нэг project дотор 3 service ажиллана:
+
+| Service | Root | Build | Start | Тайлбар |
+|---|---|---|---|---|
+| `Postgres` | — | — | — | Railway Postgres |
+| `api` | `/backend` | `npm run build` (prisma generate) | `npm start` | deploy бүрийн өмнө `npx prisma migrate deploy`, healthcheck `/health` |
+| `web` | `/frontend` | `npm run build` | `npm start` | `NEXT_PUBLIC_*` build үед уншигдана |
+
+Гол хувьсагчид: `api` → `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `NODE_ENV=production`, `PUBLIC_API_URL`, `APP_URL`, `JWT_SECRET`, `ENCRYPTION_KEY`, `ANTHROPIC_API_KEY`, `TZ=Asia/Ulaanbaatar`; `web` → `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_URL`.
+
+Production-д mock төлбөр унтраалттай (`ALLOW_MOCK_PAYMENTS=false`): хэрэглэгч дансаар шилжүүлж, та `/admin`-аас идэвхжүүлнэ. Дансны мэдээллээ `MANUAL_PAYMENT_NOTE`-д бичнэ. Production мэдээллийн санд **seed ажиллуулахгүй**.
+
 ## QPay
 `QPAY_CLIENT_ID` хоосон бол **mock горим** ажиллана: QR код үүсгэгдэж, "Төлсөн гэж дуурайлгах" товч гарч ирнэ.
 Жинхэнэ болгох бол `QPAY_BASE_URL` (sandbox: `https://merchant-sandbox.qpay.mn`, prod: `https://merchant.qpay.mn`), `QPAY_CLIENT_ID`, `QPAY_CLIENT_SECRET`, `QPAY_INVOICE_CODE`-г бөглөнө. Callback нь `{PUBLIC_API_URL}/api/billing/qpay/callback`.
