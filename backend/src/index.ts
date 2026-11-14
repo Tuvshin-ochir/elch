@@ -38,7 +38,7 @@ app.use(morgan(config.isProd ? "combined" : "dev"));
 app.get("/widget.js", serveWidgetScript);
 app.use("/api/widget", widgetRouter);
 
-app.use(cors({ origin: config.appUrl, credentials: true }));
+app.use(cors({ origin: [config.appUrl, ...config.extraOrigins], credentials: true }));
 
 // Webhooks need the raw body for signature verification → mount before express.json
 app.use("/webhooks", webhookRouter);

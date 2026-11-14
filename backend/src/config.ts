@@ -13,6 +13,11 @@ export const config = {
   isProd: process.env.NODE_ENV === "production",
   publicApiUrl: req("PUBLIC_API_URL", "http://localhost:4100").replace(/\/$/, ""),
   appUrl: req("APP_URL", "http://localhost:3100").replace(/\/$/, ""),
+  /** Extra frontend origins allowed by CORS, comma-separated (e.g. the old Railway URL while moving to a custom domain) */
+  extraOrigins: (process.env.CORS_ORIGINS ?? "")
+    .split(",")
+    .map((o) => o.trim().replace(/\/$/, ""))
+    .filter(Boolean),
   databaseUrl: req("DATABASE_URL"),
   jwtSecret: req("JWT_SECRET"),
   encryptionKey: req("ENCRYPTION_KEY"),
