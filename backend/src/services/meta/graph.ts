@@ -64,6 +64,7 @@ export async function graph<T>(
 export const fbRedirectUri = () => `${config.publicApiUrl}/api/oauth/facebook/callback`;
 export const igRedirectUri = () => `${config.publicApiUrl}/api/oauth/instagram/callback`;
 
+/** Core permissions: sign-in, Pages, Messenger and Instagram DMs (through the linked Page). */
 export const OAUTH_SCOPES = [
   "public_profile",
   "email",
@@ -71,13 +72,22 @@ export const OAUTH_SCOPES = [
   "pages_messaging",
   "pages_manage_metadata",
   "pages_read_engagement",
-  "pages_read_user_content",
-  "pages_manage_engagement",
   "instagram_basic",
   "instagram_manage_messages",
-  "instagram_manage_comments",
   "business_management",
 ];
+
+/**
+ * Comment auto-reply needs these. Meta rejects scopes the app's use cases don't include ("Invalid Scopes"),
+ * so they are only requested once listed in META_EXTRA_SCOPES (after adding them to the Meta app).
+ */
+export const COMMENT_SCOPES = ["pages_read_user_content", "pages_manage_engagement", "instagram_manage_comments"];
+
+/** Can this connection reply to comments with the permissions the platform's Meta apps currently request? */
+export const commentScopesEnabled = (kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN") =>
+  kind === "INSTAGRAM_LOGIN"
+    ? config.instagram.extraScopes.includes(IG_COMMENT_SCOPE)
+    : COMMENT_SCOPES.every((s) => config.meta.extraScopes.includes(s));
 
 export function oauthDialogUrl(redirectUri: string, state: string, extraScopes: string[] = []): string {
   const u = new URL(`https://www.facebook.com/${config.meta.graphVersion}/dialog/oauth`);
@@ -89,7 +99,7 @@ export function oauthDialogUrl(redirectUri: string, state: string, extraScopes: 
     u.searchParams.set("config_id", config.meta.loginConfigId);
     u.searchParams.set("override_default_response_type", "true");
   } else {
-    u.searchParams.set("scope", [...OAUTH_SCOPES, ...extraScopes].join(","));
+    u.searchParams.set("scope", [...new Set([...OAUTH_SCOPES, ...config.meta.extraScopes, ...extraScopes])].join(","));
   }
   u.searchParams.set("response_type", "code");
   return u.toString();
@@ -168,14 +178,16 @@ export async function unsubscribePage(pageId: string, pageToken: string) {
 
 // ───────── Instagram Login (Instagram without a Facebook page) ─────────
 
-export const IG_SCOPES = ["instagram_business_basic", "instagram_business_manage_messages", "instagram_business_manage_comments"];
+/** Instagram Login core permissions; comment replies need IG_EXTRA_SCOPES=instagram_business_manage_comments (add it to the IG app first). */
+export const IG_SCOPES = ["instagram_business_basic", "instagram_business_manage_messages"];
+export const IG_COMMENT_SCOPE = "instagram_business_manage_comments";
 
 export function igOauthDialogUrl(redirectUri: string, state: string): string {
   const u = new URL("https://www.instagram.com/oauth/authorize");
   u.searchParams.set("client_id", config.instagram.appId);
   u.searchParams.set("redirect_uri", redirectUri);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("scope", IG_SCOPES.join(","));
+  u.searchParams.set("scope", [...new Set([...IG_SCOPES, ...config.instagram.extraScopes])].join(","));
   u.searchParams.set("state", state);
   u.searchParams.set("enable_fb_login", "0");
   return u.toString();

@@ -159,6 +159,9 @@ metaRouter.patch("/pages/:id", async (req, res) => {
   }
   const page = await prisma.connectedPage.findFirst({ where: { id: param(req, "id"), businessId } });
   if (!page) throw notFound();
+  if (body.commentAutoReply && !graph.commentScopesEnabled(page.kind)) {
+    throw badRequest("Коммент автомат хариулт одоогоор идэвхгүй байна — платформын Meta аппад коммент удирдах эрх нэмэгдээгүй", "COMMENT_SCOPES_MISSING");
+  }
   if (body.fbEnabled && !page.fbPageId) throw badRequest("Энэ холболтод Facebook пэйж алга");
   if (body.igEnabled && !page.igAccountId) throw badRequest("Энэ пэйжид Instagram холбогдоогүй байна");
   const updated = await prisma.connectedPage.update({ where: { id: page.id }, data: body });

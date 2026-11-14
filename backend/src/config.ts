@@ -37,6 +37,11 @@ export const config = {
     verifyToken: process.env.META_VERIFY_TOKEN ?? "",
     /** Facebook Login for Business configuration id (optional — falls back to `scope`) */
     loginConfigId: process.env.META_LOGIN_CONFIG_ID ?? "",
+    /** Extra Facebook Login permissions, comma-separated — e.g. the comment scopes once added to the app's use cases */
+    extraScopes: (process.env.META_EXTRA_SCOPES ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
     graphVersion: process.env.META_GRAPH_VERSION || "v23.0",
     get enabled() {
       return Boolean(this.appId && this.appSecret);
@@ -48,6 +53,11 @@ export const config = {
   instagram: {
     appId: process.env.IG_APP_ID ?? "",
     appSecret: process.env.IG_APP_SECRET ?? "",
+    /** e.g. instagram_business_manage_comments, once added to the Instagram app */
+    extraScopes: (process.env.IG_EXTRA_SCOPES ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
     get enabled() {
       return Boolean(this.appId && this.appSecret);
     },
