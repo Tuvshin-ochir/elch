@@ -5,8 +5,8 @@ export const BRAND = {
   /** Latin spelling — used on the English UI and in URLs / file names */
   nameEn: "Elch",
   tagline: { mn: "Таны бизнесийн элч", en: "Your business's messenger" },
-  domain: "elch.ai",
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@elch.ai",
+  domain: "elch.chat",
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@elch.chat",
   supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || "7700-0000",
   year: 2026,
 };
