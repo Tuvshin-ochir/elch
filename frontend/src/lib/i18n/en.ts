@@ -232,6 +232,9 @@ export const en: Dict = {
     tagline: "Your business's messenger — a fast, friendly reply for every customer.",
     rights: "All rights reserved.",
     contact: "Contact",
+    privacy: "Privacy Policy",
+    terms: "Terms of Service",
+    dataDeletion: "Data Deletion",
   },
 
   auth: {

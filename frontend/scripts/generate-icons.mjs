@@ -8,6 +8,7 @@
  *   src/app/favicon.ico         — 16/32/48 px fallback
  *   src/app/apple-icon.png      — iOS home screen (180 px, full-bleed)
  *   public/icons/icon-192.png, icon-512.png, icon-maskable-512.png — PWA manifest
+ *   public/icons/icon-1024.png  — app icon for the Meta developer dashboard
  *   src/app/opengraph-image.png — link preview on Facebook / Messenger / Instagram (1200×630)
  *
  * Keep MARK in sync with src/components/Logo.tsx.
@@ -120,6 +121,8 @@ await writeFile(p("src/app/favicon.ico"), ico(await Promise.all([16, 32, 48].map
 await writeFile(p("src/app/apple-icon.png"), await png(bleed(0.86), 180));
 await writeFile(p("public/icons/icon-192.png"), await png(tile(), 192));
 await writeFile(p("public/icons/icon-512.png"), await png(tile(), 512));
+// app icon for the Meta (Facebook / Instagram) developer dashboard: 1024×1024, full-bleed
+await writeFile(p("public/icons/icon-1024.png"), await png(bleed(0.8), 1024));
 // maskable: keep the mark inside the 80% safe circle
 await writeFile(p("public/icons/icon-maskable-512.png"), await png(bleed(0.72), 512));
 await writeFile(p("src/app/opengraph-image.png"), await sharp(Buffer.from(await ogSvg()), { density: 144 }).resize(1200, 630).png().toBuffer());

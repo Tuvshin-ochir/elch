@@ -187,8 +187,19 @@ export function Footer() {
         <span>
           © {BRAND.year} {lang === "en" ? BRAND.nameEn : BRAND.name}. {t.footer.rights}
         </span>
-        <span>
-          {BRAND.supportEmail} · {BRAND.supportPhone}
+        <span className="flex flex-wrap gap-x-4 gap-y-1">
+          <Link href="/privacy" className="hover:text-brand-700">
+            {t.footer.privacy}
+          </Link>
+          <Link href="/terms" className="hover:text-brand-700">
+            {t.footer.terms}
+          </Link>
+          <Link href="/data-deletion" className="hover:text-brand-700">
+            {t.footer.dataDeletion}
+          </Link>
+          <span>
+            {BRAND.supportEmail} · {BRAND.supportPhone}
+          </span>
         </span>
       </div>
     </footer>

@@ -1,4 +1,4 @@
-/** Change the product name / contact info here. */
+/** Change the product name / contact info here. Contact details can be overridden per deployment via env. */
 export const BRAND = {
   /** Mongolian (default) name — used in page titles, logo, footer */
   name: "Элч",
@@ -6,7 +6,7 @@ export const BRAND = {
   nameEn: "Elch",
   tagline: { mn: "Таны бизнесийн элч", en: "Your business's messenger" },
   domain: "elch.ai",
-  supportEmail: "support@elch.ai",
-  supportPhone: "7700-0000",
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@elch.ai",
+  supportPhone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || "7700-0000",
   year: 2026,
 };

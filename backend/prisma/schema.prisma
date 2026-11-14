@@ -581,3 +581,24 @@ model AdCampaign {
 
   @@index([businessId, createdAt])
 }
+
+// ───────── Meta data deletion requests (required to publish the Meta apps) ─────────
+
+/// A "delete my data" / "remove app" request sent by Meta on behalf of a Facebook or Instagram user.
+/// `code` is the confirmation code Meta shows the user; they can check the status at /data-deletion?code=…
+model DataDeletionRequest {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  /// "facebook" | "instagram"
+  provider       String
+  /// "deletion" | "deauthorize"
+  kind           String
+  /// App-scoped Facebook user id / Instagram user id from the signed_request
+  externalUserId String
+  /// What was removed, e.g. { pages: 2, metaAccount: true, unlinkedUser: true }
+  result         Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  @@index([externalUserId])
+}
