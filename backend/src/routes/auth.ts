@@ -70,8 +70,9 @@ authRouter.get("/oauth/:provider/start", limiter, (req, res) => {
     return res.json({ url: graph.oauthDialogUrl(graph.fbRedirectUri(), state) });
   }
   if (provider === "instagram") {
-    if (!config.instagram.enabled) throw badRequest("Instagram нэвтрэлт тохируулагдаагүй байна (IG_APP_ID)", "IG_NOT_CONFIGURED");
-    if (!config.publicApiUrl.startsWith("https://")) throw badRequest("Instagram нэвтрэлтэд PUBLIC_API_URL нь https байх ёстой", "NEEDS_HTTPS");
+    const mode = config.instagramConnect;
+    if (mode === "unified") return res.json({ url: graph.unifiedLoginUrl(graph.igRedirectUri(), state) });
+    if (!mode) throw badRequest("Instagram нэвтрэлт тохируулагдаагүй байна (META_IG_CONFIG_ID, https)", "IG_NOT_CONFIGURED");
     return res.json({ url: graph.igOauthDialogUrl(graph.igRedirectUri(), state) });
   }
   throw badRequest("Unknown provider");

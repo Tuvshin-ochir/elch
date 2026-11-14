@@ -29,7 +29,7 @@ export async function syncPageKnowledge(connectedPageId: string) {
         type: "PAGE_SYNC",
         sourceRef: page.id,
         title:
-          page.kind === "INSTAGRAM_LOGIN"
+          page.kind !== "FACEBOOK_LOGIN"
             ? `Instagram: @${page.igUsername ?? page.name}`
             : `Facebook: ${page.name}${page.igUsername ? ` + Instagram @${page.igUsername}` : ""}`,
         status: "PROCESSING",

@@ -153,7 +153,7 @@ export interface KnowledgeSource {
 
 export interface ConnectedPage {
   id: string;
-  kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN";
+  kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN" | "INSTAGRAM_UNIFIED";
   fbPageId: string | null;
   tokenExpiresAt: string | null;
   fbEnabled: boolean;

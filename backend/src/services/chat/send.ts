@@ -65,6 +65,7 @@ export async function sendToContact(args: {
       for (const part of splitText(args.text, max)) {
         const r = await graph.sendText({
           api: graph.apiFor(page.kind),
+          node: graph.msgNode(page),
           token,
           recipientId: contact.externalId,
           text: part,
@@ -101,5 +102,5 @@ export async function sendToContact(args: {
 
 export async function typing(contact: Contact & { page?: ConnectedPage | null }) {
   if (isLocalChannel(contact) || !contact.page) return;
-  await graph.sendSenderAction(graph.apiFor(contact.page.kind), decrypt(contact.page.accessToken), contact.externalId, "typing_on");
+  await graph.sendSenderAction(graph.apiFor(contact.page.kind), decrypt(contact.page.accessToken), contact.externalId, "typing_on", graph.msgNode(contact.page));
 }

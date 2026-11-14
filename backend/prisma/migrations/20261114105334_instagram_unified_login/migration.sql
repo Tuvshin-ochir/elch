@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ConnectionKind" ADD VALUE 'INSTAGRAM_UNIFIED';

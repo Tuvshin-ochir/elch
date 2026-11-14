@@ -66,7 +66,7 @@ async function revokeMetaData(provider: Provider, externalUserId: string) {
   } else {
     const [user, pages] = await Promise.all([
       prisma.user.findUnique({ where: { igUserId: externalUserId }, select: { id: true } }),
-      prisma.connectedPage.findMany({ where: { kind: "INSTAGRAM_LOGIN", igAccountId: externalUserId }, select: { id: true } }),
+      prisma.connectedPage.findMany({ where: { kind: { in: ["INSTAGRAM_LOGIN", "INSTAGRAM_UNIFIED"] }, igAccountId: externalUserId }, select: { id: true } }),
     ]);
     result.knowledge += (await prisma.knowledgeSource.deleteMany({ where: { type: "PAGE_SYNC", sourceRef: { in: pages.map((p) => p.id) } } })).count;
     result.pages += (await prisma.connectedPage.deleteMany({ where: { id: { in: pages.map((p) => p.id) } } })).count;

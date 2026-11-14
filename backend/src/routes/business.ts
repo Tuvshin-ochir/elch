@@ -17,7 +17,7 @@ publicRouter.get("/plans", (_req, res) => {
     cardProvider: config.cardProvider,
     social: {
       facebook: config.meta.enabled,
-      instagram: config.instagram.enabled && config.publicApiUrl.startsWith("https://"),
+      instagram: config.instagramConnect !== null,
     },
   });
 });

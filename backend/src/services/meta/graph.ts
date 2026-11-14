@@ -5,7 +5,9 @@
  *  - FACEBOOK_LOGIN  → graph.facebook.com with a Page access token. Covers Messenger and the
  *                      Instagram account linked to that page.
  *  - INSTAGRAM_LOGIN → graph.instagram.com with an Instagram user token. Instagram only,
- *                      no Facebook page required.
+ *                      no Facebook page required. (Legacy — new Meta apps can't set it up.)
+ *  - INSTAGRAM_UNIFIED → graph.facebook.com/{ig-id} with a Business Integration System User token
+ *                      from Unified Login (log in with Instagram or Facebook, no page required).
  */
 import crypto from "node:crypto";
 import { config } from "../../config.ts";
@@ -13,6 +15,10 @@ import type { ConnectionKind } from "../../generated/prisma/enums.ts";
 
 export type Api = "fb" | "ig";
 export const apiFor = (kind: ConnectionKind): Api => (kind === "INSTAGRAM_LOGIN" ? "ig" : "fb");
+
+/** Node that sends messages: page / Instagram-Login tokens use "me"; Unified Login tokens address the IG account by id. */
+export const msgNode = (page: { kind: ConnectionKind; igAccountId: string | null }) =>
+  page.kind === "INSTAGRAM_UNIFIED" && page.igAccountId ? page.igAccountId : "me";
 
 const base = (api: Api) =>
   api === "ig" ? `https://graph.instagram.com/${config.meta.graphVersion}` : `https://graph.facebook.com/${config.meta.graphVersion}`;
@@ -84,10 +90,12 @@ export const OAUTH_SCOPES = [
 export const COMMENT_SCOPES = ["pages_read_user_content", "pages_manage_engagement", "instagram_manage_comments"];
 
 /** Can this connection reply to comments with the permissions the platform's Meta apps currently request? */
-export const commentScopesEnabled = (kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN") =>
-  kind === "INSTAGRAM_LOGIN"
-    ? config.instagram.extraScopes.includes(IG_COMMENT_SCOPE)
-    : COMMENT_SCOPES.every((s) => config.meta.extraScopes.includes(s));
+export const commentScopesEnabled = (kind: ConnectionKind) =>
+  kind === "INSTAGRAM_UNIFIED"
+    ? true // the Unified Login configuration grants instagram_manage_comments by default
+    : kind === "INSTAGRAM_LOGIN"
+      ? config.instagram.extraScopes.includes(IG_COMMENT_SCOPE)
+      : COMMENT_SCOPES.every((s) => config.meta.extraScopes.includes(s));
 
 export function oauthDialogUrl(redirectUri: string, state: string, extraScopes: string[] = []): string {
   const u = new URL(`https://www.facebook.com/${config.meta.graphVersion}/dialog/oauth`);
@@ -248,6 +256,69 @@ export async function igUnsubscribe(token: string) {
 
 // ───────── Messaging (works for both APIs) ─────────
 
+// ───────── Instagram API with Unified Login (Instagram without a Facebook page) ─────────
+
+/** Login link from the configuration: clients log in with Instagram or Facebook, pick a business portfolio + IG account. */
+export function unifiedLoginUrl(redirectUri: string, state: string): string {
+  const u = new URL("https://www.facebook.com/dialog/oauth");
+  u.searchParams.set("client_id", config.meta.appId);
+  u.searchParams.set("config_id", config.meta.igConfigId);
+  u.searchParams.set("redirect_uri", redirectUri);
+  u.searchParams.set("response_type", "code");
+  u.searchParams.set("override_default_response_type", "true");
+  u.searchParams.set("state", state);
+  u.searchParams.set("prompt", "login"); // always offer both the Instagram and the Facebook option
+  return u.toString();
+}
+
+export interface UnifiedAccount {
+  igAccountId: string;
+  username: string;
+  name: string;
+  picture?: string;
+}
+
+/** code → Business Integration System User token (Meta app id/secret) + the Instagram accounts the client shared */
+export async function unifiedExchangeCode(code: string, redirectUri: string) {
+  const t = await graph<{ access_token: string; expires_in?: number }>("oauth/access_token", {
+    query: { client_id: config.meta.appId, client_secret: config.meta.appSecret, redirect_uri: redirectUri, code },
+  });
+  const token = t.access_token;
+  const [me, assigned] = await Promise.all([
+    graph<{ client_business_id?: string }>("me", { token, query: { fields: "client_business_id" } }).catch(() => ({}) as { client_business_id?: string }),
+    graph<{ data: Array<{ id: string; username?: string }> }>("me/assigned_instagram_accounts", { token, query: { fields: "id,username" } }),
+  ]);
+  const accounts: UnifiedAccount[] = await Promise.all(
+    assigned.data.map(async (a) => {
+      const p = await graph<{ username?: string; name?: string; profile_picture_url?: string }>(a.id, {
+        token,
+        query: { fields: "username,name,profile_picture_url" },
+      }).catch(() => null);
+      const username = p?.username ?? a.username ?? a.id;
+      return { igAccountId: String(a.id), username, name: p?.name || username, picture: p?.profile_picture_url };
+    }),
+  );
+  return {
+    accessToken: token,
+    expiresAt: t.expires_in ? new Date(Date.now() + t.expires_in * 1000) : null,
+    clientBusinessId: me.client_business_id ?? null,
+    accounts,
+  };
+}
+
+/** Webhooks for one shared account (comments need instagram_manage_comments — fall back to messages only) */
+export async function unifiedSubscribe(igId: string, token: string) {
+  try {
+    await graph(`${igId}/subscribed_apps`, { method: "POST", token, query: { subscribed_fields: "messages,comments" } });
+  } catch {
+    await graph(`${igId}/subscribed_apps`, { method: "POST", token, query: { subscribed_fields: "messages" } });
+  }
+}
+
+export async function unifiedUnsubscribe(igId: string, token: string) {
+  await graph(`${igId}/subscribed_apps`, { method: "DELETE", token }).catch(() => undefined);
+}
+
 export type MessagingType = "RESPONSE" | "UPDATE" | "MESSAGE_TAG";
 
 export async function sendText(args: {
@@ -257,22 +328,26 @@ export async function sendText(args: {
   text: string;
   messagingType?: MessagingType;
   tag?: string;
+  /** "me" (default) or the IG account id for Unified Login connections */
+  node?: string;
 }): Promise<{ message_id?: string }> {
-  return graph("me/messages", {
+  const node = args.node ?? "me";
+  return graph(`${node}/messages`, {
     api: args.api,
     method: "POST",
     token: args.token,
     body: {
       recipient: { id: args.recipientId },
-      ...(args.api === "fb" ? { messaging_type: args.tag ? "MESSAGE_TAG" : (args.messagingType ?? "RESPONSE") } : {}),
+      // messaging_type is a Messenger (page "me") field
+      ...(args.api === "fb" && node === "me" ? { messaging_type: args.tag ? "MESSAGE_TAG" : (args.messagingType ?? "RESPONSE") } : {}),
       ...(args.tag ? { tag: args.tag } : {}),
       message: { text: args.text },
     },
   });
 }
 
-export async function sendSenderAction(api: Api, token: string, recipientId: string, action: "typing_on" | "typing_off" | "mark_seen") {
-  await graph("me/messages", {
+export async function sendSenderAction(api: Api, token: string, recipientId: string, action: "typing_on" | "typing_off" | "mark_seen", node = "me") {
+  await graph(`${node}/messages`, {
     api,
     method: "POST",
     token,
@@ -281,8 +356,8 @@ export async function sendSenderAction(api: Api, token: string, recipientId: str
 }
 
 /** Private reply to a comment (opens a DM thread with the commenter) */
-export async function sendPrivateReply(api: Api, token: string, commentId: string, text: string) {
-  return graph<{ recipient_id?: string; message_id?: string }>("me/messages", {
+export async function sendPrivateReply(api: Api, token: string, commentId: string, text: string, node = "me") {
+  return graph<{ recipient_id?: string; message_id?: string }>(`${node}/messages`, {
     api,
     method: "POST",
     token,

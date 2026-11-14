@@ -223,7 +223,7 @@ export default function AdminOverview() {
           ))}
         </div>
         <p className="mt-3 text-xs text-muted">
-          Холболтууд: Facebook {data.channels.FACEBOOK_LOGIN ?? 0} · Instagram {data.channels.INSTAGRAM_LOGIN ?? 0}
+          Холболтууд: Facebook пэйж {data.channels.FACEBOOK_LOGIN ?? 0} · Пэйжгүй Instagram {(data.channels.INSTAGRAM_LOGIN ?? 0) + (data.channels.INSTAGRAM_UNIFIED ?? 0)}
         </p>
       </Panel>
     </>

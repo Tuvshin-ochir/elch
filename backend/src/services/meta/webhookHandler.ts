@@ -159,7 +159,7 @@ async function handleComment(
       else await graph.replyToIgComment(api, token, c.commentId, page.commentReplyText);
     }
     if (page.commentDmText) {
-      await graph.sendPrivateReply(api, token, c.commentId, page.commentDmText);
+      await graph.sendPrivateReply(api, token, c.commentId, page.commentDmText, graph.msgNode(page));
       await prisma.message.create({
         data: {
           businessId: page.businessId,

@@ -75,7 +75,7 @@ function ConnectionCard({ page, onChange }: { page: ConnectedPage; onChange: () 
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState("");
   const commentsAllowed = me?.subscription.planDef.features.commentAutoReply;
-  const isIgOnly = p.kind === "INSTAGRAM_LOGIN";
+  const isIgOnly = p.kind !== "FACEBOOK_LOGIN";
 
   async function update(data: Partial<ConnectedPage>) {
     setErr("");

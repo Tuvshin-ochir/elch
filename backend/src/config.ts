@@ -43,8 +43,14 @@ export const config = {
       .map((s) => s.trim())
       .filter(Boolean),
     graphVersion: process.env.META_GRAPH_VERSION || "v23.0",
+    /** Instagram API with Unified Login: the Facebook Login for Business configuration id
+     *  (App Dashboard → Instagram use case → API setup with Unified login). Connect Instagram without a Page. */
+    igConfigId: process.env.META_IG_CONFIG_ID ?? "",
     get enabled() {
       return Boolean(this.appId && this.appSecret);
+    },
+    get instagramUnified() {
+      return this.enabled && Boolean(this.igConfigId);
     },
   },
 
@@ -74,6 +80,14 @@ export const config = {
   },
 
   cardProvider: process.env.CARD_PROVIDER || "mock",
+
+  /** "Instagram-аар" sign-in / connect: Unified Login (preferred) or legacy Instagram Login; both need an https redirect */
+  get instagramConnect(): "unified" | "legacy" | null {
+    if (!this.publicApiUrl.startsWith("https://")) return null;
+    if (this.meta.instagramUnified) return "unified";
+    if (this.instagram.enabled) return "legacy";
+    return null;
+  },
 
   /** Sandbox payments (fake QPay QR, mock bank page). Always on in dev; in production only with ALLOW_MOCK_PAYMENTS=true. */
   get mockPaymentsAllowed() {

@@ -12,7 +12,7 @@ import { config } from "../config.ts";
 import { prisma, type PlanCode } from "../lib/prisma.ts";
 import { signToken } from "../middleware/auth.ts";
 import { createAccount } from "../services/account.ts";
-import { connectInstagramAccount, saveMetaAccount } from "../services/meta/connect.ts";
+import { connectInstagramAccount, connectUnifiedInstagram, saveMetaAccount } from "../services/meta/connect.ts";
 import * as graph from "../services/meta/graph.ts";
 
 export const oauthRouter = Router();
@@ -84,6 +84,38 @@ oauthRouter.get("/instagram/callback", async (req, res) => {
   const code = typeof req.query.code === "string" ? req.query.code : "";
   if (!state) return fail(res, undefined, "Хугацаа дууссан, дахин оролдоно уу", "ig");
   if (!code) return fail(res, state.kind, String(req.query.error_description ?? "Instagram нэвтрэлтийг цуцаллаа"), "ig");
+
+  // Unified Login: Business Integration System User token, one or more IG accounts, graph.facebook.com
+  if (config.meta.instagramUnified) {
+    try {
+      const r = await graph.unifiedExchangeCode(code, graph.igRedirectUri());
+      if (!r.accounts.length) return fail(res, state.kind, "Instagram professional аккаунт сонгогдоогүй байна. Дахин холбохдоо аккаунтаа сонгоно уу.", "ig");
+      if (state.kind === "connect") {
+        await connectUnifiedInstagram(state.bid, r);
+        return res.redirect(`${config.appUrl}/dashboard/channels?ig=connected`);
+      }
+      // Sign up / log in with the first shared account; every shared account becomes a channel
+      const first = r.accounts[0];
+      let user = await prisma.user.findUnique({ where: { igUserId: first.igAccountId } });
+      let isNew = false;
+      if (!user) {
+        ({ user } = await createAccount({
+          name: first.name,
+          igUserId: first.igAccountId,
+          avatarUrl: first.picture,
+          businessName: first.name,
+          businessType: "other",
+          plan: state.plan,
+        }));
+        isNew = true;
+      }
+      const business = await prisma.business.findUniqueOrThrow({ where: { ownerId: user.id } });
+      await connectUnifiedInstagram(business.id, r).catch((e) => console.warn("[ig-unified] connect on login:", e instanceof Error ? e.message : e));
+      return finishAuth(res, user.id, isNew, state.plan);
+    } catch (err) {
+      return fail(res, state.kind, err instanceof Error ? err.message : "Instagram error", "ig");
+    }
+  }
 
   try {
     const r = await graph.igExchangeCode(code, graph.igRedirectUri());

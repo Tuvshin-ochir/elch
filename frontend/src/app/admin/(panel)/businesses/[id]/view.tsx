@@ -21,7 +21,7 @@ interface Detail {
   adminNote: string | null;
   widgetEnabled: boolean;
   owner: { id: string; name: string; email: string | null; phone: string | null; fbUserId: string | null; igUserId: string | null; locale: string; createdAt: string; avatarUrl: string | null };
-  pages: Array<{ id: string; kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN"; name: string; igUsername: string | null; fbEnabled: boolean; igEnabled: boolean; commentAutoReply: boolean; lastSyncedAt: string | null; tokenExpiresAt: string | null; createdAt: string }>;
+  pages: Array<{ id: string; kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN" | "INSTAGRAM_UNIFIED"; name: string; igUsername: string | null; fbEnabled: boolean; igEnabled: boolean; commentAutoReply: boolean; lastSyncedAt: string | null; tokenExpiresAt: string | null; createdAt: string }>;
   payments: Array<{ id: string; plan: string; amount: number; method: string; status: string; isAutoCharge: boolean; failureReason: string | null; note: string | null; paidAt: string | null; createdAt: string; paymentMethod: { brand: string; last4: string } | null }>;
   _count: { contacts: number; messages: number; leads: number; knowledge: number; broadcasts: number; tags: number };
   subscription: {

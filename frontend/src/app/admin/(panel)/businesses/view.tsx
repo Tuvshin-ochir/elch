@@ -16,7 +16,7 @@ interface Row {
   suspendedAt: string | null;
   owner: { name: string; email: string | null; phone: string | null; fbUserId: string | null; igUserId: string | null };
   subscription: { plan: string; status: string; currentPeriodEnd: string | null; autoRenew: boolean } | null;
-  pages: Array<{ kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN"; name: string; igUsername: string | null }>;
+  pages: Array<{ kind: "FACEBOOK_LOGIN" | "INSTAGRAM_LOGIN" | "INSTAGRAM_UNIFIED"; name: string; igUsername: string | null }>;
   _count: { contacts: number };
   active: boolean;
   aiRepliesMonth: number;

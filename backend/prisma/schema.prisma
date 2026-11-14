@@ -48,7 +48,8 @@ enum Platform {
 /// How a channel was connected
 enum ConnectionKind {
   FACEBOOK_LOGIN // FB page (+ its linked Instagram) via Facebook Login — page access token
-  INSTAGRAM_LOGIN // Instagram professional account directly via Instagram Login — no FB page needed
+  INSTAGRAM_LOGIN // Instagram professional account directly via Instagram Login — no FB page needed (legacy: new Meta apps can't use it)
+  INSTAGRAM_UNIFIED // Instagram API with Unified Login: log in with Instagram or Facebook, no FB page; Business Integration System User token on graph.facebook.com/{ig-id}
 }
 
 enum KnowledgeType {
@@ -334,6 +335,8 @@ model ConnectedPage {
   tokenExpiresAt     DateTime?
   igAccountId        String?        @unique
   igUsername         String?
+  /// INSTAGRAM_UNIFIED: the client's business portfolio id (Meta token management API)
+  clientBusinessId   String?
   /// Automate Facebook Messenger on this connection
   fbEnabled          Boolean        @default(true)
   /// Automate Instagram Direct on this connection

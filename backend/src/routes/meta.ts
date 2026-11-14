@@ -120,7 +120,7 @@ metaRouter.post("/pages", async (req, res) => {
   let page: ConnectedPage;
   if (other) page = await prisma.connectedPage.update({ where: { id: other.id }, data });
   else if (igStandalone) {
-    await graph.igUnsubscribe(decrypt(igStandalone.accessToken));
+    await unsubscribe(igStandalone);
     page = await prisma.connectedPage.update({ where: { id: igStandalone.id }, data });
   } else page = await prisma.connectedPage.create({ data: { businessId, ...data } });
 
@@ -131,12 +131,10 @@ metaRouter.post("/pages", async (req, res) => {
 // ── Instagram Login ──
 
 metaRouter.get("/ig/oauth-url", (req, res) => {
-  if (!config.instagram.enabled) throw badRequest("IG_APP_ID / IG_APP_SECRET тохируулаагүй байна", "IG_NOT_CONFIGURED");
-  if (!config.publicApiUrl.startsWith("https://")) {
-    throw badRequest("Instagram нэвтрэлтэд PUBLIC_API_URL нь https байх ёстой (cloudflared/ngrok tunnel ашиглана)", "NEEDS_HTTPS");
-  }
+  const mode = config.instagramConnect;
+  if (!mode) throw badRequest("Instagram холболт тохируулагдаагүй байна (META_IG_CONFIG_ID, https)", "IG_NOT_CONFIGURED");
   const state = jwt.sign({ kind: "connect", bid: bid(req) }, config.jwtSecret, { expiresIn: "15m" });
-  res.json({ url: graph.igOauthDialogUrl(graph.igRedirectUri(), state) });
+  res.json({ url: mode === "unified" ? graph.unifiedLoginUrl(graph.igRedirectUri(), state) : graph.igOauthDialogUrl(graph.igRedirectUri(), state) });
 });
 
 // ── Per-connection settings ──
@@ -178,7 +176,9 @@ metaRouter.post("/pages/:id/sync", async (req, res) => {
 async function unsubscribe(page: ConnectedPage) {
   const token = decrypt(page.accessToken);
   if (page.kind === "INSTAGRAM_LOGIN") await graph.igUnsubscribe(token);
-  else if (page.fbPageId) await graph.unsubscribePage(page.fbPageId, token);
+  else if (page.kind === "INSTAGRAM_UNIFIED") {
+    if (page.igAccountId) await graph.unifiedUnsubscribe(page.igAccountId, token);
+  } else if (page.fbPageId) await graph.unsubscribePage(page.fbPageId, token);
 }
 
 metaRouter.delete("/pages/:id", async (req, res) => {
