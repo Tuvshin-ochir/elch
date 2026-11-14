@@ -1,0 +1,583 @@
+// Chatbot SaaS — Facebook Messenger + Instagram AI chatbot
+// Prisma 7 (driver adapter: @prisma/adapter-pg). Connection URL lives in prisma.config.ts
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────── Enums ─────────────────────────
+
+enum PlanCode {
+  STARTER
+  BUSINESS
+  PRO
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE // registered, not paid yet — bot does not reply
+  ACTIVE
+  PAST_DUE // auto-charge failed, retrying
+  EXPIRED // period ended without payment — bot stops replying
+  CANCELED
+}
+
+enum PaymentMethodType {
+  QPAY
+  CARD
+  MANUAL // bank transfer / cash recorded by a platform admin
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELED
+}
+
+enum Platform {
+  FACEBOOK
+  INSTAGRAM
+  WEB // website chat widget
+}
+
+/// How a channel was connected
+enum ConnectionKind {
+  FACEBOOK_LOGIN // FB page (+ its linked Instagram) via Facebook Login — page access token
+  INSTAGRAM_LOGIN // Instagram professional account directly via Instagram Login — no FB page needed
+}
+
+enum KnowledgeType {
+  FILE
+  PAGE_SYNC
+  URL
+  TEXT
+  FAQ
+}
+
+enum KnowledgeStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum MessageDirection {
+  IN
+  OUT
+}
+
+enum MessageSender {
+  CUSTOMER
+  BOT
+  AGENT
+  BROADCAST
+  SYSTEM
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TagSource {
+  MANUAL
+  KEYWORD
+  AI
+  COMMENT
+  AD // came from a Click-to-Message ad
+}
+
+enum AdDestination {
+  MESSENGER
+  INSTAGRAM_DIRECT
+}
+
+enum AdStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  FAILED
+  ARCHIVED
+}
+
+enum TagRuleType {
+  KEYWORD
+  AI_INTENT
+  COMMENT
+}
+
+enum BroadcastType {
+  ONE_TIME // send once at scheduledAt
+  RECURRING // daily / weekly / monthly at scheduledAt time
+  TAG_TRIGGER // N minutes after a tag is added to a contact
+  INACTIVITY // N minutes after the customer's last message (within 24h window)
+}
+
+enum Recurrence {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum BroadcastStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  DONE
+}
+
+enum DeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum LeadType {
+  ORDER
+  BOOKING
+  INQUIRY
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  DONE
+  CANCELED
+}
+
+// ───────────────────────── Accounts ─────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  /// null for accounts created with Instagram (Instagram shares no email)
+  email        String?   @unique
+  /// null for accounts that only sign in with Facebook / Instagram
+  passwordHash String?
+  /// Facebook user id (sign in with Facebook)
+  fbUserId     String?   @unique
+  /// Instagram professional account id (sign in with Instagram)
+  igUserId     String?   @unique
+  avatarUrl    String?
+  name         String
+  phone        String?
+  locale       String    @default("mn")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  business     Business?
+}
+
+model Business {
+  id           String   @id @default(cuid())
+  ownerId      String   @unique
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  businessType String   @default("other")
+  /// Dynamic form values: { fields: Record<string,string>, items: Array<Record<string,string>>, faqs: Array<{q,a}> }
+  profile      Json     @default("{}")
+  /// Bot persona settings (tone, emoji, greeting, handoff text, languages…)
+  botSettings  Json     @default("{}")
+  /// Public id used by the website chat widget embed code
+  widgetKey      String @unique @default(cuid())
+  /// Website widget: { enabled, title, welcome, color, position }
+  widgetSettings Json   @default("{}")
+  /// Set by a platform admin: login is blocked and the bot stops replying
+  suspendedAt   DateTime?
+  suspendReason String?
+  /// Internal note visible only in /admin
+  adminNote     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscription      Subscription?
+  paymentMethods    PaymentMethod[]
+  payments          Payment[]
+  cardSetupSessions CardSetupSession[]
+  metaAccount       MetaAccount?
+  pages             ConnectedPage[]
+  adCampaigns       AdCampaign[]
+  knowledge         KnowledgeSource[]
+  contacts          Contact[]
+  messages          Message[]
+  tags              Tag[]
+  tagRules          TagRule[]
+  broadcasts        Broadcast[]
+  leads             Lead[]
+}
+
+/// Platform operator account for /admin — separate from business owners (User)
+model Admin {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// ───────────────────────── Billing ─────────────────────────
+
+model Subscription {
+  id                 String             @id @default(cuid())
+  businessId         String             @unique
+  business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan               PlanCode           @default(STARTER)
+  status             SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  autoRenew          Boolean            @default(false)
+  /// Plan to switch to at next renewal (downgrade scheduling)
+  pendingPlan        PlanCode?
+  failedAttempts     Int                @default(0)
+  nextRetryAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+model PaymentMethod {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider   String // "mock" | "golomt" | "khan" ...
+  /// Provider token (never raw card data)
+  token      String
+  brand      String
+  last4      String
+  expMonth   Int
+  expYear    Int
+  isDefault  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  payments   Payment[]
+
+  @@index([businessId])
+}
+
+model CardSetupSession {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  provider   String
+  status     String    @default("PENDING") // PENDING | COMPLETED | FAILED
+  /// optional: pay for a plan immediately after saving the card
+  payPlan    PlanCode?
+  /// turn on monthly auto-charge once the card is saved
+  autoRenew  Boolean   @default(false)
+  returnUrl  String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+}
+
+model Payment {
+  id              String            @id @default(cuid())
+  businessId      String
+  business        Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan            PlanCode
+  amount          Int
+  currency        String            @default("MNT")
+  method          PaymentMethodType
+  status          PaymentStatus     @default(PENDING)
+  isAutoCharge    Boolean           @default(false)
+  // QPay
+  qpayInvoiceId   String?           @unique
+  qrText          String?
+  qrImage         String?
+  deeplinks       Json?
+  // Card
+  paymentMethodId String?
+  paymentMethod   PaymentMethod?    @relation(fields: [paymentMethodId], references: [id], onDelete: SetNull)
+  providerRef     String?
+  failureReason   String?
+  /// Admin note (e.g. manual bank transfer reference)
+  note            String?
+  paidAt          DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([businessId, createdAt])
+}
+
+// ───────────────────────── Meta (Facebook / Instagram) ─────────────────────────
+
+model MetaAccount {
+  id          String    @id @default(cuid())
+  businessId  String    @unique
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  fbUserId    String
+  fbUserName  String?
+  /// AES-256-GCM encrypted long-lived user token
+  accessToken String
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/// One connected channel account: a Facebook page (optionally with its linked Instagram)
+/// or a standalone Instagram account. The owner picks which channels the bot automates.
+model ConnectedPage {
+  id                 String         @id @default(cuid())
+  businessId         String
+  business           Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  kind               ConnectionKind @default(FACEBOOK_LOGIN)
+  /// null for INSTAGRAM_LOGIN connections
+  fbPageId           String?        @unique
+  name               String
+  pictureUrl         String?
+  category           String?
+  /// AES-256-GCM encrypted token: page token (FACEBOOK_LOGIN) or Instagram user token (INSTAGRAM_LOGIN)
+  accessToken        String
+  /// Instagram Login tokens expire after 60 days and are refreshed by the scheduler
+  tokenExpiresAt     DateTime?
+  igAccountId        String?        @unique
+  igUsername         String?
+  /// Automate Facebook Messenger on this connection
+  fbEnabled          Boolean        @default(true)
+  /// Automate Instagram Direct on this connection
+  igEnabled          Boolean        @default(true)
+  commentAutoReply   Boolean   @default(false)
+  commentReplyText   String?
+  commentDmText      String?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime  @default(now())
+  contacts           Contact[]
+
+  @@index([businessId])
+}
+
+// ───────────────────────── Knowledge base ─────────────────────────
+
+model KnowledgeSource {
+  id         String          @id @default(cuid())
+  businessId String
+  business   Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type       KnowledgeType
+  title      String
+  fileName   String?
+  mimeType   String?
+  size       Int?
+  url        String?
+  /// page id for PAGE_SYNC
+  sourceRef  String?
+  content    String          @default("")
+  status     KnowledgeStatus @default(PROCESSING)
+  error      String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([businessId])
+}
+
+// ───────────────────────── CRM / Inbox ─────────────────────────
+
+model Contact {
+  id              String       @id @default(cuid())
+  businessId      String
+  business        Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  pageId          String?
+  page            ConnectedPage? @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  platform        Platform
+  /// PSID (Messenger) or IGSID (Instagram). "playground:*" for dashboard tests
+  externalId      String
+  name            String?
+  username        String?
+  profilePic      String?
+  phone           String?
+  email           String?
+  notes           String?
+  /// Segmentation data — Meta does not share age/location, so these come from the
+  /// conversation (AI extraction) or are entered by staff.
+  birthYear       Int?
+  gender          Gender?
+  /// "Улаанбаатар", aimag name or "Гадаад"
+  city            String?
+  /// Ulaanbaatar district (e.g. "Баянзүрх")
+  district        String?
+  /// Meta ad id when the conversation was started from a Click-to-Message ad
+  adId            String?
+  lastInboundAt   DateTime?
+  lastMessageAt   DateTime?
+  lastMessageText String?
+  unread          Int          @default(0)
+  /// Bot paused for this contact until (human takeover)
+  botPausedUntil  DateTime?
+  needsHuman      Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  messages   Message[]
+  tags       ContactTag[]
+  deliveries BroadcastDelivery[]
+  leads      Lead[]
+
+  @@unique([businessId, platform, externalId])
+  @@index([businessId, lastMessageAt])
+  @@index([businessId, city, district])
+}
+
+model Message {
+  id          String           @id @default(cuid())
+  businessId  String
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  direction   MessageDirection
+  sender      MessageSender
+  text        String           @default("")
+  attachments Json?
+  /// Meta message id (dedupe)
+  mid         String?          @unique
+  error       String?
+  createdAt   DateTime         @default(now())
+
+  @@index([contactId, createdAt])
+  @@index([businessId, sender, createdAt])
+}
+
+model Tag {
+  id         String       @id @default(cuid())
+  businessId String
+  business   Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  color      String       @default("#6366f1")
+  createdAt  DateTime     @default(now())
+  contacts   ContactTag[]
+  rules      TagRule[]
+
+  @@unique([businessId, name])
+}
+
+model ContactTag {
+  contactId String
+  contact   Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  source    TagSource @default(MANUAL)
+  createdAt DateTime  @default(now())
+
+  @@id([contactId, tagId])
+}
+
+model TagRule {
+  id          String      @id @default(cuid())
+  businessId  String
+  business    Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type        TagRuleType
+  tagId       String
+  tag         Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  keywords    String[]    @default([])
+  /// AI_INTENT: plain-language description of when to apply the tag
+  intent      String?
+  /// COMMENT: optional post/media id filter (empty = any post)
+  postId      String?
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+
+  @@index([businessId, type])
+}
+
+model Broadcast {
+  id            String          @id @default(cuid())
+  businessId    String
+  business      Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String
+  message       String
+  type          BroadcastType
+  tagIds        String[]        @default([])
+  /// Audience segment: { ageMin, ageMax, gender, cities, districts, platforms, activeWithinDays, hasLead }
+  filters       Json            @default("{}")
+  /// ONE_TIME/RECURRING: first run time
+  scheduledAt   DateTime?
+  recurrence    Recurrence?
+  /// TAG_TRIGGER / INACTIVITY delay
+  delayMinutes  Int?
+  /// Meta message tag for sending outside the 24h window (CONFIRMED_EVENT_UPDATE, POST_PURCHASE_UPDATE, ACCOUNT_UPDATE)
+  messageTag    String?
+  status        BroadcastStatus @default(ACTIVE)
+  nextRunAt     DateTime?
+  lastRunAt     DateTime?
+  sentCount     Int             @default(0)
+  failedCount   Int             @default(0)
+  skippedCount  Int             @default(0)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deliveries    BroadcastDelivery[]
+
+  @@index([status, nextRunAt])
+}
+
+model BroadcastDelivery {
+  id          String         @id @default(cuid())
+  broadcastId String
+  broadcast   Broadcast      @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact        @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status      DeliveryStatus @default(PENDING)
+  sendAt      DateTime
+  sentAt      DateTime?
+  /// Dedupe key: run time (ONE_TIME/RECURRING), tag time (TAG_TRIGGER), last inbound time (INACTIVITY)
+  anchor      String
+  error       String?
+  createdAt   DateTime       @default(now())
+
+  @@unique([broadcastId, contactId, anchor])
+  @@index([status, sendAt])
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  businessId String
+  business   Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  contactId  String
+  contact    Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  type       LeadType
+  name       String?
+  phone      String?
+  details    String
+  status     LeadStatus @default(NEW)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([businessId, createdAt])
+}
+
+// ───────── Click-to-Message ads (reach new people by age / location) ─────────
+
+/// A Messenger / Instagram Direct "click-to-message" ad created through the Meta Marketing API.
+/// People who click it start a chat that the bot answers.
+model AdCampaign {
+  id              String        @id @default(cuid())
+  businessId      String
+  business        Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  pageId          String
+  adAccountId     String
+  currency        String
+  name            String
+  destination     AdDestination
+  status          AdStatus      @default(DRAFT)
+  /// { ageMin, ageMax, gender, cities[], districts[], radiusKm }
+  targeting       Json
+  /// daily budget in the ad account currency (major units)
+  dailyBudget     Float
+  startAt         DateTime
+  endAt           DateTime?
+  primaryText     String
+  headline        String
+  imageUrl        String?
+  metaCampaignId  String?
+  metaAdSetId     String?
+  metaCreativeId  String?
+  metaAdId        String?       @unique
+  metaStatus      String?
+  /// { impressions, reach, clicks, spend, conversations }
+  stats           Json          @default("{}")
+  statsUpdatedAt  DateTime?
+  error           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([businessId, createdAt])
+}

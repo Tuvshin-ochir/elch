@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Brand: fresh green (600 on white = 4.9:1 → AA for button text) */
+  --color-brand-50: #effaf4;
+  --color-brand-100: #d7f3e3;
+  --color-brand-200: #b1e6c9;
+  --color-brand-300: #7fd3a8;
+  --color-brand-400: #47b982;
+  --color-brand-500: #22a06b;
+  --color-brand-600: #12805a;
+  --color-brand-700: #0e6a4b;
+  --color-brand-800: #0d5640;
+  --color-brand-900: #0b4535;
+  --color-brand-950: #062a20;
+  --color-ink: #0f1f1a;
+  --color-muted: #5b6b65;
+  --color-line: #e1e9e5;
+  --color-canvas: #f4f8f6;
+  /* Chart roles (validated categorical order + one-hue sequential ramp) */
+  --color-series-1: #2a78d6;
+  --color-series-2: #eb6834;
+  --color-series-3: #1baf7a;
+  --color-seq-100: #cde2fb;
+  --color-seq-200: #9ec5f4;
+  --color-seq-300: #6da7ec;
+  --color-seq-400: #3987e5;
+  --color-seq-500: #256abf;
+  --color-seq-600: #184f95;
+  --color-seq-700: #0d366b;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pop: pop 0.35s ease-out both;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fbfdfc;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #0b6e4f, #12a36d 55%, #7cc644);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(18 128 90 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(18 128 90 / 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+
+/* ── Landing / marketing pages: warm cream background (dashboard keeps its own) ── */
+.marketing {
+  --color-canvas: #f3ecdf; /* alternate section band */
+  --color-line: #e7dcc8; /* warm borders */
+  --color-muted: #6b6559; /* warm secondary text */
+  background: #faf6ee;
+}
+
+.marketing .bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(140 110 60 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(140 110 60 / 0.07) 1px, transparent 1px);
+}
+
+/* Hero glow: soft green + warm sun over cream */
+.bg-mint {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, rgb(18 128 90 / 0.12), transparent 60%),
+    radial-gradient(50rem 30rem at -10% 10%, rgb(234 179 8 / 0.1), transparent 60%),
+    #faf6ee;
+}

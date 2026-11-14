@@ -1,0 +1,332 @@
+import type { MarketingDict } from "./marketing.mn";
+
+export const marketingEn: MarketingDict = {
+  learnMore: "Learn more",
+  ctaTitle: "Stop keeping customers waiting",
+  ctaText: "Sign up, pick a plan, connect Facebook, Instagram or your website — Elch starts replying right away.",
+  ctaButton: "Get started",
+  ctaSecondary: "See pricing",
+
+  solutions: {
+    eyebrow: "Solutions",
+    title: "Stop losing the sales that start in chat",
+    subtitle:
+      "Most sales for Mongolian businesses start in Messenger or Instagram. Slow replies, forgotten orders and repetitive questions cost many of them. Here's exactly how the bot fixes each.",
+    problemLabel: "Problem",
+    solutionLabel: "Solution",
+    items: [
+      {
+        icon: "🌙",
+        title: "Night and weekend messages go unanswered",
+        problem: "A customer asks for a price at 11pm and buys from a competitor by morning.",
+        solution: "The bot answers 24/7 within seconds — prices, stock and delivery straight from your info — and records the order.",
+        bullets: ["Always on, replies in ~5 seconds", "See overnight orders in the morning", "Staff only confirm"],
+        stat: { value: "24/7", label: "non-stop replies" },
+      },
+      {
+        icon: "🔁",
+        title: "The same questions hundreds of times a day",
+        problem: "\"How much?\", \"Where are you?\", \"Do you deliver?\" eat most of your team's time.",
+        solution: "The bot handles common questions end to end and understands Mongolian typed in Latin letters. Staff step in only where a decision is needed.",
+        bullets: ["Automates 80%+ of questions", "Understands Cyrillic, Latin and English", "Remembers the conversation"],
+        stat: { value: "80%+", label: "automated" },
+      },
+      {
+        icon: "🧾",
+        title: "Orders get lost in chat",
+        problem: "Name, phone, address and quantities are scattered across messages, so orders get forgotten or mixed up.",
+        solution: "The bot asks for everything an order needs. Once confirmed it becomes one clean row in Orders / Leads.",
+        bullets: ["Asks for item, quantity, address, phone", "Separates orders, bookings and inquiries", "Track status: New → Contacted → Done"],
+        stat: { value: "0", label: "lost orders" },
+      },
+      {
+        icon: "💬",
+        title: "\"Price?\" comments go unanswered",
+        problem: "Lots of people comment \"price?\" on your ads and nobody has time to reply to each.",
+        solution: "The bot replies publicly, sends the details to their inbox and tags them automatically.",
+        bullets: ["Public reply + private message", "Filter by post or keyword", "Group commenters for follow-up"],
+        stat: { value: "2×", label: "more conversations" },
+      },
+      {
+        icon: "📣",
+        title: "You lose touch with past customers",
+        problem: "Past buyers are likely to buy again, but there's no system to reach them.",
+        solution: "Tag customers four ways and send the right message on schedule: thank-yous, reminders, promotions.",
+        bullets: ["Thank-you 2 hours after an order", "Nudge customers who stopped replying", "Weekly promos on autopilot"],
+        stat: { value: "4+4", label: "tag & schedule modes" },
+      },
+      {
+        icon: "👩‍💼",
+        title: "High staff workload and cost",
+        problem: "Hiring someone just to answer chats is expensive and shifts are hard to cover.",
+        solution: "The bot takes simple questions and hands real cases to your team. Watch every chat in the inbox and jump in anytime.",
+        bullets: ["Auto-handoff on request or complaints", "Bot pauses 12h when staff reply", "Track response speed in analytics"],
+        stat: { value: "99,000₮", label: "per month, from" },
+      },
+    ],
+    beforeAfter: {
+      title: "Without vs. with the bot",
+      before: "Without",
+      after: "With the bot",
+      rows: [
+        ["Night messages answered next morning", "Night messages answered in 5 seconds"],
+        ["Staff answer 200 repeat questions a day", "Staff only confirm orders"],
+        ["Orders scattered and forgotten", "Every order recorded in a list"],
+        ["No follow-up with past customers", "Tagged groups get automatic messages"],
+      ],
+    },
+  },
+
+  industries: {
+    eyebrow: "Industries",
+    title: "Made for your kind of business",
+    subtitle: "Pick your business type and get a tailored info form. The bot understands your customers' questions and asks for the right details.",
+    handlesLabel: "What the bot does",
+    fieldsLabel: "What you fill in",
+    planLabel: "Suggested plan",
+    items: [
+      {
+        icon: "🍽️",
+        title: "Restaurants & cafes",
+        intro: "Menu, prices, delivery and reservations handled end to end — no order lost at peak hours.",
+        chat: [
+          { from: "user", text: "Do you have a table for 4 at 7pm tonight?" },
+          { from: "bot", text: "We do 😊 Leave your name and phone and I'll confirm it." },
+        ],
+        handles: ["Menu, prices, ingredients", "Delivery zones, time, fees", "Table reservations", "Taking and confirming orders"],
+        fields: ["Menu (name, price, category, description)", "Delivery terms", "Reservation policy", "Hours, address"],
+        plan: "Business",
+      },
+      {
+        icon: "🛍️",
+        title: "Online shops",
+        intro: "Answers size, color and stock questions instantly and takes orders. Perfect for Instagram shops.",
+        chat: [
+          { from: "user", text: "Do you have these sneakers in 41? (photo)" },
+          { from: "bot", text: "Air X in size 41, white and black 👟 189,000₮. Want it delivered?" },
+        ],
+        handles: ["Recognizes products from photos", "Sizes, colors, stock", "Shipping and returns", "Order, address and phone"],
+        fields: ["Products (name, price, size/color, stock)", "Shipping terms", "Returns & exchanges", "Pickup point"],
+        plan: "Business",
+      },
+      {
+        icon: "💅",
+        title: "Beauty & salons",
+        intro: "Shares services, prices and specialists, books appointments and explains the cancellation policy.",
+        chat: [
+          { from: "user", text: "Can I get gel nails tomorrow at 3pm?" },
+          { from: "bot", text: "Sara is free tomorrow at 3pm 💅 Gel nails 45,000₮, 1.5h. Leave your name and phone." },
+        ],
+        handles: ["Services, prices, duration", "Choosing a specialist", "Booking appointments", "Cancel / reschedule policy"],
+        fields: ["Services (name, price, duration, specialist)", "How to book", "Cancellation policy"],
+        plan: "Starter",
+      },
+      {
+        icon: "🩺",
+        title: "Clinics & dental",
+        intro: "Doctors, schedules, prices and insurance — and appointment requests recorded for your front desk.",
+        chat: [
+          { from: "user", text: "How much is a cleaning? Is it covered by insurance?" },
+          { from: "bot", text: "A cleaning is 60,000₮. We're an insurance partner, so some services are covered. Book a time?" },
+        ],
+        handles: ["Services and prices", "Doctor schedules", "Insurance, emergencies", "Appointment requests"],
+        fields: ["Services / doctors (price, schedule)", "Appointment process", "Insurance", "Emergency info"],
+        plan: "Business",
+      },
+      {
+        icon: "🎓",
+        title: "Education & courses",
+        intro: "Explains programs, start dates, prices and enrollment, and takes sign-up requests.",
+        chat: [
+          { from: "user", text: "When does the next English class start?" },
+          { from: "bot", text: "Beginner class starts Dec 1, 3 months, 350,000₮ 📚 Want to enroll?" },
+        ],
+        handles: ["Programs, levels, length", "Start dates, schedule", "Online / in person", "Enrollment requests"],
+        fields: ["Courses (name, price, length, start, level)", "Enrollment process", "Certificate"],
+        plan: "Starter",
+      },
+      {
+        icon: "🏠",
+        title: "Real estate",
+        intro: "Shares listings, locations and mortgage terms, and passes viewing requests to your agents.",
+        chat: [
+          { from: "user", text: "How much is a 2-room flat in Zaisan?" },
+          { from: "bot", text: "A 64m² 2-room flat in Zaisan is 320M₮, mortgage eligible 🏠 When would you like to view it?" },
+        ],
+        handles: ["Listings, prices, area", "Mortgage terms", "Booking viewings", "Handoff to an agent"],
+        fields: ["Listings (title, price, location, rooms, area)", "Financing", "Viewings"],
+        plan: "Pro",
+      },
+      {
+        icon: "🏨",
+        title: "Hotels & travel",
+        intro: "Rooms, tour packages, prices, inclusions and cancellation terms — plus booking requests.",
+        chat: [
+          { from: "user", text: "Any double rooms free this weekend?" },
+          { from: "bot", text: "Standard room 180,000₮/night with breakfast 🏨 What are your check-in and check-out dates?" },
+        ],
+        handles: ["Rooms, tours, prices", "Check-in / out", "Cancellation terms", "Booking requests"],
+        fields: ["Rooms / tours (price, capacity, inclusions)", "Check-in time", "Cancellation policy"],
+        plan: "Business",
+      },
+      {
+        icon: "🚗",
+        title: "Auto service & parts",
+        intro: "Service and parts prices by car model, warranty terms and bookings.",
+        chat: [
+          { from: "user", text: "How much is an oil change for a Prius 30?" },
+          { from: "bot", text: "Prius 30 oil change from 85,000₮, 30 minutes 🚗 Book for tomorrow?" },
+        ],
+        handles: ["Service and parts prices", "By car model", "Warranty terms", "Bookings"],
+        fields: ["Services / parts (price, model, duration)", "Warranty", "Booking"],
+        plan: "Starter",
+      },
+    ],
+  },
+
+  features: {
+    eyebrow: "Features",
+    title: "Everything you need to sell in chat",
+    subtitle: "AI replies, three channels, a knowledge base, automation, analytics and payments — in one place.",
+    groups: [
+      {
+        icon: "🧠",
+        title: "Human-like AI replies",
+        text: "Built on Claude AI — friendly, natural answers from your business information.",
+        bullets: [
+          "Prices and policies only from your info — never invented",
+          "Off-topic questions answered briefly, then steered back",
+          "Understands Mongolian (Cyrillic & Latin) and English",
+          "Tone: friendly, formal or playful",
+          "Understands photos customers send",
+        ],
+      },
+      {
+        icon: "📱",
+        title: "Three channels — pick and automate",
+        text: "Facebook Messenger, Instagram Direct and your own website — one or all of them.",
+        bullets: ["Connect a Facebook page in one click", "Connect Instagram directly, no page needed", "Add website chat with one line of code", "Switch each channel on or off"],
+      },
+      {
+        icon: "📚",
+        title: "Knowledge base",
+        text: "You decide what the bot knows — four ways to add information.",
+        bullets: ["Auto-import page info and posts", "Forms tailored to 10 business types", "PDF, Word, Excel, PowerPoint, images — any file", "Website links and ready-made templates"],
+      },
+      {
+        icon: "🏷️",
+        title: "Tag customers 4 ways",
+        text: "Group customers automatically and treat each group right.",
+        bullets: ["Manually — from inbox and contacts", "By keyword — \"price\", \"order\"", "By AI intent — \"complaint\", \"ready to buy\"", "By comment — on a specific post"],
+      },
+      {
+        icon: "⏰",
+        title: "Scheduled messages, 4 modes",
+        text: "The right message at the right time — automatically.",
+        bullets: [
+          "One-time — at a chosen date & time",
+          "Recurring — daily, weekly, monthly",
+          "After a tag — e.g. 2h after an order",
+          "After inactivity — nudge quiet customers",
+          "Segment by age, gender, city/aimag, district, channel and order history",
+          "Reach new people: \"Send message\" ads targeted by age and location — the bot talks to everyone who taps",
+        ],
+      },
+      {
+        icon: "📨",
+        title: "Unified inbox & human handoff",
+        text: "Every channel's chats in one live inbox.",
+        bullets: ["Pause the bot per chat and reply yourself", "Auto \"needs human\" on requests and complaints", "Phone, notes, tags and orders per customer", "Replying in Meta Business Suite pauses the bot"],
+      },
+      {
+        icon: "📊",
+        title: "Detailed analytics",
+        text: "See how well the bot works and how much it sells.",
+        bullets: ["Messages, AI replies, automation rate", "When customers write — weekday × hour heatmap", "Sales funnel and lead conversion", "Response speed, frequent words, CSV export"],
+      },
+      {
+        icon: "🔒",
+        title: "Payments & security",
+        text: "Local payments and safe storage.",
+        bullets: ["Pay with QPay or a bank card", "Optional monthly auto-charge", "Card numbers never stored (tokens only)", "Meta tokens encrypted at rest"],
+      },
+    ],
+  },
+
+  pricing: {
+    eyebrow: "Pricing",
+    title: "Pick the plan that fits",
+    subtitle: "No contract, billed monthly. Switch plans or turn off auto-renew anytime.",
+    compareTitle: "Compare plans",
+    feature: "Feature",
+    rows: {
+      connections: "Connections (FB page and/or IG)",
+      aiReplies: "AI replies / month",
+      files: "Knowledge files",
+      broadcasts: "Broadcasts / month",
+      website: "Website chat widget",
+      pageSync: "Import from your page",
+      leadCapture: "Order & lead capture",
+      inbox: "Unified inbox, human handoff",
+      manualTags: "Manual & keyword tagging",
+      analytics: "Analytics, CSV export",
+      aiTagging: "AI auto-tagging",
+      commentAutoReply: "Comment auto-reply",
+      imageUnderstanding: "Photo understanding",
+      sequences: "Tag-triggered & inactivity messages",
+    },
+    billingTitle: "About billing",
+    billingFaq: [
+      { q: "How do I pay?", a: "With QPay (any bank app) or a bank card. Save your card to be charged automatically each month." },
+      { q: "What if I hit the limit?", a: "When AI replies run out the bot pauses for the month and marks chats as \"needs human\". Upgrade to continue instantly." },
+      { q: "What happens when I switch plans?", a: "The new plan's period starts on the payment date. Paying for the same plan extends your current period." },
+      { q: "What if auto-payment fails?", a: "We retry every 24 hours, 3 times. The bot keeps working for 3 days meanwhile." },
+    ],
+  },
+
+  faq: {
+    eyebrow: "FAQ",
+    title: "Questions & answers",
+    subtitle: "Can't find your answer? Get in touch.",
+    groups: [
+      {
+        title: "General",
+        items: [
+          { q: "Do I need to code?", a: "No. Sign up with Facebook or Instagram and add your info through forms or files." },
+          { q: "How fast can I go live?", a: "Sign up, pay, connect a channel — usually 5–10 minutes. Page info is imported automatically." },
+          { q: "Is there a free trial?", a: "No. It's a monthly subscription with no contract, so you can stop anytime." },
+        ],
+      },
+      {
+        title: "Channels",
+        items: [
+          { q: "Can I automate only Instagram or only Facebook?", a: "Yes. Instagram Professional accounts connect directly without a Facebook page, and each channel can be switched on or off." },
+          { q: "How do I add it to my website?", a: "Copy one line of code from Channels and paste it before </body> on your site. Works on WordPress, Shopify and Wix." },
+          { q: "Does it reply to post comments?", a: "Yes (Business, Pro). It replies publicly and sends the commenter a private message." },
+        ],
+      },
+      {
+        title: "AI bot",
+        items: [
+          { q: "What if the bot answers wrong?", a: "It only uses your info for prices, products and policies, never invents, and hands off when unsure. Test it first in the playground." },
+          { q: "What about off-topic questions?", a: "It replies briefly and naturally, then guides the chat back to your business." },
+          { q: "Can I reply myself?", a: "Pause the bot for a chat in the inbox and type. Replying from Meta Business Suite also pauses it for 12 hours." },
+        ],
+      },
+      {
+        title: "Billing",
+        items: [
+          { q: "Which payment methods?", a: "QPay and bank cards. Save your card for automatic monthly payments." },
+          { q: "How do I stop auto-renew?", a: "Turn it off in Billing. The bot keeps working until the paid period ends." },
+        ],
+      },
+      {
+        title: "Security",
+        items: [
+          { q: "Where is my card stored?", a: "You enter the card on the bank's page. We only keep a token and the last 4 digits." },
+          { q: "Are customer messages safe?", a: "Your data is visible only in your account, and Meta access tokens are encrypted at rest." },
+        ],
+      },
+    ],
+  },
+};
